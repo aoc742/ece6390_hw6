@@ -9,14 +9,6 @@ def pam_mod():
 def am_mod():
     return
 
-# Rx Amplitude demodulation
-def am_demod():
-    return
-
-# Rx Matched filter
-def matched_filter():
-    return
-
 if __name__ == "__main__":
     # Bit rate Rb = 1 / Tb
     # Shape of pulse p(t)
@@ -28,11 +20,21 @@ if __name__ == "__main__":
     # Goal: Find the best possible pulse shape for this system and attach plots
     # of the pulse spectrum that demonstrate the validity of your pulse design.
 
-    t1 = -10 # start time
-    t2 = 10 # end time
+    t1 = 0 # start time
+    t2 = 1 # end time
     N = 2**8 # nof samples
     t = np.linspace(t1, t2, N)
-    fs = N/(t2-t1)
+    fs = N/(t2-t1) # sample rate
+    Ts = 1/fs # period
+
+    # carrier signal (sine wave)
+    carrier = np.sin(2*np.pi*t)
+    plt.figure()
+    plt.plot(carrier)
+    plt.grid()
+    plt.show()
+
+
     x = np.sinc(0.5-np.abs(t))
     # X = np.fft.fft(x)
     X = np.fft.fftshift(np.fft.fft(x))
@@ -42,17 +44,6 @@ if __name__ == "__main__":
     PSD_log = 10.0*np.log10(PSD)
     PSD_shifted = np.fft.fftshift(PSD_log)
     
-    center_freq = 2.45e9 # 2.45 GHz
-    f = np.arange(fs/-2.0, fs/2.0, fs/N) # start, stop, step size centered about 0 Hz
-    f += center_freq
-    plt.plot(f, PSD_shifted)
-    plt.show()
-    
 
-    plt.plot(t, x, '.-')
-    plt.show()
-
-    plt.plot(t, XX, '.-')
-    plt.show()
 
 
