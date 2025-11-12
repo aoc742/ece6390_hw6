@@ -4,13 +4,13 @@ from scipy import signal
 import random
 
 def pulse_amplitude_modulation(data):
-    pulse_width = 400 * 1e-9 # Pulse width 20 ns
-    Tb = 1000 * 1e-9  # Bit duration 1us
+    pulse_width = 0.00000002 # 20 ns limit
+    Tb = 0.00000002 # PRI
     bitrate = 1/Tb
 
     print(f"bitrate: {int(bitrate)} bps")
 
-    Fs = 1e9 # 100MHz sample rate
+    Fs = 2**28 # 1e9 # 100MHz sample rate
     Ts = 1 / Fs # Ts = period (time between each sample)
     
     samples_per_bit = int(Tb / Ts)
@@ -29,24 +29,28 @@ def pulse_amplitude_modulation(data):
     return t, pam_signal, Fs, duration
 
 # The binary sequence to modulate
-# data = np.array([1, 0, 1, 0, 1, 1, 0, 0, 1, 1])
-data = np.random.randint(2, size=5)
+# data = np.array([1, 0, 1, 0, 1])
+data = np.random.randint(2, size=500000)
 
 # PAM
 t, pam_signal, Fs, duration = pulse_amplitude_modulation(data)
 
 plt.subplot(3, 2, 1)
 plt.plot(t, pam_signal) 
-plt.title("PAM (time)")
+plt.title("PAM")
 
 # AM upconvert to 2.45 GHz center frequency
 carrier_amp = 1
-carrier_freq = 2.45e9
-carrier_phase = 0
-modulation_index = 0.8 # ratio of carrier to sideband amplitude (aka carrier envelope)
-am_signal = (1 + modulation_index * pam_signal) * carrier_amp * np.sin(2*np.pi* carrier_freq * t + carrier_phase)
+carrier_freq = 2.45e9 # 2.45 GHz
+modulation_index = 0.4 # ratio of carrier to sideband amplitude (aka carrier envelope)
+carrier = carrier_amp * np.cos(2*np.pi*carrier_freq*t)
+am_signal = (1 + modulation_index * pam_signal) * carrier
 
 plt.subplot(3, 2, 2)
+plt.plot(t, carrier)
+plt.title(f"AM Carrier ({int(carrier_freq)} Hz)")
+
+plt.subplot(3, 2, 3)
 plt.plot(t, am_signal)
 plt.title("AM modulation")
 
@@ -67,14 +71,14 @@ f_axis = np.arange(-Fs/2, Fs/2, Fs/len(padded_output_signal))
 
 output_fft_scaled = abs(np.fft.fftshift(output_fft))*(duration)/len(output_fft)
 
-plt.subplot(3, 2, 3)
+plt.subplot(3, 2, 4)
 plt.plot(f_axis, output_fft_scaled)
-plt.title("Shifted FFT")
+plt.title(f"FFT (0-padded to {len(padded_output_signal)} samples)")
 
 # PSD
-psd = 10*np.log10(output_fft_scaled)
+psd = 10*np.log10(output_fft_scaled**2)
 # # psd = abs(output_fft)**2 + 0.25*abs(output_fft[0])**2
-plt.subplot(3, 2, 4)
+plt.subplot(3, 2, 5)
 # plt.psd(output_fft_scaled, Fs=Fs, )
 plt.plot(f_axis, psd)
 plt.title("PSD")
