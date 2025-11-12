@@ -1,9 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import signal
-import random
 
-def pulse_amplitude_modulation(data):
+def pam(data):
     pulse_width = 0.00000002 # 20 ns limit
     Tb = 0.00000002 # PRI
     bitrate = 1/Tb
@@ -20,11 +18,14 @@ def pulse_amplitude_modulation(data):
     duration = len(data) * Tb
     t = np.arange(-duration/2, duration/2, Ts) # nof_samples
     
+    # Create PAM signal (single bit per symbol)
+    # 0 -> 0
+    # 1 -> 1
     pam_signal = np.zeros(len(t))
     for i, bit in enumerate(data):
         start = i * samples_per_bit
         end = start + samples_per_pulse
-        pam_signal[start:end] = 5 if bit == 1 else 0
+        pam_signal[start:end] = 1 if bit == 1 else 0
             
     return t, pam_signal, Fs, duration
 
@@ -33,7 +34,7 @@ def pulse_amplitude_modulation(data):
 data = np.random.randint(2, size=500000)
 
 # PAM
-t, pam_signal, Fs, duration = pulse_amplitude_modulation(data)
+t, pam_signal, Fs, duration = pam(data)
 
 plt.subplot(3, 2, 1)
 plt.plot(t, pam_signal) 
@@ -66,9 +67,10 @@ print(f"Length of padded output: {len(padded_output_signal)}")
 # FFT 
 output_fft = np.fft.fft(padded_output_signal)
 
+# frequency plot points for graphing FFT and PSD
+f_axis = carrier_freq + np.arange(-Fs/2, Fs/2, Fs/len(padded_output_signal))
 
-f_axis = np.arange(-Fs/2, Fs/2, Fs/len(padded_output_signal))
-
+# FFT shifted and scaled for visualization
 output_fft_scaled = abs(np.fft.fftshift(output_fft))*(duration)/len(output_fft)
 
 plt.subplot(3, 2, 4)
@@ -77,12 +79,9 @@ plt.title(f"FFT (0-padded to {len(padded_output_signal)} samples)")
 
 # PSD
 psd = 10*np.log10(output_fft_scaled**2)
-# # psd = abs(output_fft)**2 + 0.25*abs(output_fft[0])**2
 plt.subplot(3, 2, 5)
-# plt.psd(output_fft_scaled, Fs=Fs, )
 plt.plot(f_axis, psd)
 plt.title("PSD")
-
 
 plt.tight_layout()
 plt.show()
